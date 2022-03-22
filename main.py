@@ -1,67 +1,31 @@
-import logging
-from telegram import Update
+import telebot
+from telebot import types
 import yaml
-from telegram.ext import (
-    Updater,
-    CommandHandler,
-    MessageHandler,
-    Filters,
-    ConversationHandler,
-    CallbackContext,
-)
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                                level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-def start(update: Update, context: CallbackContext):
-    context.bot.send_message(chat_id=update.effective_chat.id, 
-                                text="Ну привет, криптан!")
-    keyboard = [
-        [
-            InlineKeyboardButton("Option 1", callback_data='1'),
-            InlineKeyboardButton("Option 2", callback_data='2'),
-        ],
-        [InlineKeyboardButton("Option 3", callback_data='3')],
-    ]
-
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    update.message.reply_text('Please choose:', reply_markup=reply_markup)
-
-def button(update: Update, context: CallbackContext):
-    query = update.callback_query
-    query.answer()
-    query.edit_message_text(text=f"Selected option: {query.data}")
-
-    keyboard = [
-        [
-            InlineKeyboardButton("Option 1", callback_data='1'),
-            InlineKeyboardButton("Option 2", callback_data='2'),
-        ],
-        [InlineKeyboardButton("Option 3", callback_data='3')],
-    ]
-
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    update.message.reply_text('Please choose:', reply_markup=reply_markup)
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 with open('config.yml') as f: 
     data = yaml.load(f, Loader=yaml.FullLoader)
-    
 
-updater = Updater(token=data['TOKEN'], use_context=True)
-dispatcher = updater.dispatcher
+bot = telebot.TeleBot(data["TOKEN"])
 
-def main():
-    updater.dispatcher.add_handler(CommandHandler('start', start))
-    updater.dispatcher.add_handler(CallbackQueryHandler(button))
+def gen_markup():
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 2
+    markup.add(InlineKeyboardButton("Yes", callback_data="cb_yes"),
+                               InlineKeyboardButton("No", callback_data="cb_no"))
+    return markup
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call, message):
+    if call.data == "cb_yes":
+        bot.send_message(message.chat.id, "Огоо")
+    elif call.data == "cb_no":
+        bot.answer_callback_query(message.chat.id, "Не огооо")
+
+@bot.message_handler(func=lambda message: True)
+def message_handler(message):
+    bot.send_message(message.chat.id, "What's next?", reply_markup=gen_markup())
+
+bot.infinity_polling()
 
 
-    updater.start_polling()
-    updater.idle()
-
-if __name__ == '__main__':
-    main()

@@ -1,7 +1,7 @@
 import telebot
-from telebot import types
+from telebot import *
 import yaml
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import *
 
 with open('config.yml') as f: 
     data = yaml.load(f, Loader=yaml.FullLoader)
